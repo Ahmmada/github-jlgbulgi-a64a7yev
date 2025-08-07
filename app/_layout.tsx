@@ -19,7 +19,6 @@ import { fetchAndSyncRemoteLevels } from '@/lib/levelsDb';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  useFrameworkReady();
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -94,24 +93,19 @@ export default function RootLayout() {
   const handleSyncOnSignIn = async () => {
     const netState = await NetInfo.fetch();
     if (netState.isConnected) {
-        console.log('🔄 بدء المزامنة الشاملة بعد تسجيل الدخول...');
+        console.log('🔄 مزامنة جميع المراكز والمستويات من Supabase بعد تسجيل الدخول...');
         try {
-            // استخدام SyncManager المحسن للمزامنة الشاملة
-            const { syncManager } = await import('@/lib/syncManager')
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-            const result = await syncManager.syncAll();
-            
-            if (result.success) {
-                console.log('✅ تمت المزامنة الشاملة بنجاح بعد تسجيل الدخول.');
-            } else {
-                console.warn('⚠️ المزامنة جزئية بعد تسجيل الدخول:', result.message);
-            }
+            await Promise.all([
+                fetchAndSyncRemoteOffices(), 
+                fetchAndSyncRemoteLevels()  
+            ]);
+            console.log('✅ تمت مزامنة جميع المراكز والمستويات بنجاح.');
         } catch (syncError) {
-            console.error('❌ خطأ في المزامنة الشاملة بعد تسجيل الدخول:', syncError);
+            console.error('❌ خطأ في مزامنة المراكز والمستويات الأولية بعد تسجيل الدخول:', syncError);
             Alert.alert("خطأ في المزامنة", "لم نتمكن من مزامنة البيانات الأولية مع الخادم. يرجى التحقق من اتصالك وإعادة المحاولة.");
         }
     }
-  };
+  }
 
   const determineTargetRoute = async (user: any | null) => {
     let targetRoute = '/signIn';
